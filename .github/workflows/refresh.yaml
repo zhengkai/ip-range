@@ -1,0 +1,65 @@
+name: Update List
+
+on: 
+  schedule:
+    - cron:  '16 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Init
+        run: |
+          git config --global user.email "bot@soulogic.com"
+          git config --global user.name "Zheng Kai"
+
+      - name: Checkout Script Repo
+        uses: actions/checkout@v6
+        with:
+          ref: master
+          path: .
+
+      - name: Checkout Data Repo
+        uses: actions/checkout@v6
+        with:
+          ref: dist
+          path: dist
+          fetch-depth: 0
+
+      - name: Refresh
+        run: |
+          ./download.sh 
+          ./ipv4.sh 
+          ./ipv6.sh 
+
+      - name: mmdb
+        run: |
+          go version
+          go run mmdb.go
+
+      - name: Copy
+        run: |
+          cp step-v4/*.txt dist/ipv4/
+          cp step-v6/*.txt dist/ipv6/
+          cp output.mmdb dist/country.mmdb
+
+      - name: Publish
+        run: |
+          cd dist
+          git add .
+          git status --short
+          git commit -m "Update dist $(date -u +'%Y-%m-%d %H:%M:%S UTC')" || echo "No changes"
+
+      - name: Squash Commit
+        run: |
+          ./squash-dist.sh dist
+
+      - name: Push
+        run: |
+          cd dist && \
+          git push --force
