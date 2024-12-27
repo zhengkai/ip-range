@@ -8,7 +8,7 @@ cd "$(dirname "$0")" || exit 1
 mkdir -p step1
 
 echo "Generating IPv4 list"
-grep -h '|ipv6|' raw/*.txt | grep -v -E "\|\||\|\*\|" > "$FILE_DATA"
+grep -h '|ipv6|' raw/*.txt | grep -v -E "\|\||\|\*\|" | sort > "$FILE_DATA"
 
 echo "Generating country list"
 cut -d'|' -f2 "$FILE_DATA" | sort -u > "$FILE_COUNTRY"
@@ -27,6 +27,7 @@ mkdir -p step-v6
 
 while IFS= read -r C; do
 	echo -n "$C "
-	grep "|${C}|" "$FILE_DATA" | awk -F'|' '/\|US\|ipv6\|/ { print $4 "/" $5 }' "$FILE_DATA" \
+	grep "|${C}|" "$FILE_DATA" | awk -F'|' '/\|ipv6\|/ { print $4 "/" $5 }' \
 		> "step-v6/${C,,}.txt"
 done < "$FILE_COUNTRY"
+echo

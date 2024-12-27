@@ -1,0 +1,42 @@
+name: Update List
+
+on: 
+  schedule:
+    - cron:  '16 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Script Repo
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          ssh-key: ${{ secrets.SSH_KEY }}
+          path: main
+
+      - name: Checkout Data Repo
+        uses: actions/checkout@v4
+        with:
+          ref: dist
+          ssh-key: ${{ secrets.SSH_KEY }}
+          path: data
+
+      - name: Refresh
+        run: |
+          main/download.sh 
+          main/ipv4.sh 
+          main/ipv6.sh 
+
+      - name: Copy
+        run: |
+          mkdir -p data/ipv4
+          cp main/step-v4/*.txt data/ipv4/
+          mkdir -p data/ipv6
+          cp main/step-v6/*.txt data/ipv6/
+
+      - name: Save Repo
+        uses: EndBug/add-and-commit@v9
+        with:
+          cwd: data
